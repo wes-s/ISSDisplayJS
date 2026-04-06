@@ -387,7 +387,7 @@ function drawMoonSideArrows(points, centerX, targetPoint, color, size, alpha) {
   const targetCanvas = toCanvasPoint(targetPoint, centerX);
 
   points.forEach((point, index) => {
-    if (index % 3 !== 0) return;
+    if (index % 2 !== 0) return;
     if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.bearingToNext)) return;
 
     const canvasPoint = toCanvasPoint(point, centerX);
@@ -403,10 +403,9 @@ function drawMoonSideArrows(points, centerX, targetPoint, color, size, alpha) {
 
     const delta = Math.atan2(Math.sin(towardMoon - tangent), Math.cos(towardMoon - tangent));
 
-    // Instead of pointing directly at the moon, cant the arrow a fixed amount
-    // toward the visible side, closer to the Python rendering.
+    // Fixed inward cant toward the visible side, then flip 180 degrees to correct orientation.
     const fixedTurn = 0.62; // about 35 degrees
-    const angle = tangent + (delta >= 0 ? fixedTurn : -fixedTurn);
+    const angle = tangent + (delta >= 0 ? fixedTurn : -fixedTurn) + Math.PI;
 
     ctx.save();
     ctx.translate(canvasPoint.x, canvasPoint.y);
@@ -422,6 +421,7 @@ function drawMoonSideArrows(points, centerX, targetPoint, color, size, alpha) {
 
   ctx.restore();
 }
+
 
 
 function drawMarker(point, centerX, color, radius, alpha) {
@@ -610,9 +610,9 @@ function drawScene(data, images, nowMs = Date.now()) {
   drawLoadedIcon(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, images.iss, 40);
 
   drawPath(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawMoonSideArrows(data.layers.northMoonPath, NORTH_CENTER_X, data.layers.northMoonPosition, 'rgba(220,220,220,0.55)', 6, 0.55);
+  drawMoonSideArrows(data.layers.northMoonPath, NORTH_CENTER_X, data.layers.northMoonPosition, 'rgba(220,220,220,0.55)', 8, 0.55);
   drawPath(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawMoonSideArrows(data.layers.southMoonPath, SOUTH_CENTER_X, data.layers.southMoonPosition, 'rgba(220,220,220,0.55)', 6, 0.55);
+  drawMoonSideArrows(data.layers.southMoonPath, SOUTH_CENTER_X, data.layers.southMoonPosition, 'rgba(220,220,220,0.55)', 8, 0.55);
 
   if (data.layers.northMoonPosition.visible) {
     const p = toCanvasPoint(data.layers.northMoonPosition, NORTH_CENTER_X);
