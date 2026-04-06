@@ -12,6 +12,7 @@ const SOUTH_CENTER_X = 750;
 const CENTER_Y = TOP_OFFSET + PANEL_SIZE / 2;
 const ISS_ID = 25544;
 const ISS_INDEX = 6;
+const DEFAULT_N2YO_WORKER_URL = 'https://wild-dew-d242.wwscoggin.workers.dev';
 const AUTO_REFRESH_MS = 15 * 60 * 1000;
 
 const IMAGE_URLS = {
@@ -36,18 +37,14 @@ const IMAGE_URLS = {
 const IMAGE_CACHE = new Map();
 const params = new URLSearchParams(window.location.search);
 const controls = document.getElementById('controls');
-const keyInput = document.getElementById('key');
 const satellitesInput = document.getElementById('satellites');
-const proxyInput = document.getElementById('proxy');
 const canvas = document.getElementById('display');
 const ctx = canvas.getContext('2d');
 const errorEl = document.getElementById('error');
 const titleEl = document.getElementById('title');
 let refreshTimer = null;
 
-keyInput.value = params.get('key') || '';
 satellitesInput.value = params.get('satellites') || '';
-proxyInput.value = params.get('proxy') || '';
 
 async function loadImage(url) {
   if (!IMAGE_CACHE.has(url)) {
@@ -63,10 +60,13 @@ async function loadImage(url) {
 }
 
 function proxiedUrl(url) {
-  const proxy = (params.get('proxy') || '').trim();
-  if (!proxy) return url;
-  const normalized = proxy.replace(/\/$/, '');
-  return `${normalized}/n2yo?url=${encodeURIComponent(url)}`;
+  const workerBase = DEFAULT_N2YO_WORKER_URL;
+  if (!workerBase) return url;
+  const normalized = workerBase.replace(/\/$/, '');
+  const match = url.match(/satellite\/positions\/(\d+)\//);
+  const satelliteId = match ? match[1] : '';
+  if (!satelliteId) return url;
+  return `${normalized}/n2yo?satelliteId=${encodeURIComponent(satelliteId)}`;
 }
 
 async function fetchJson(url, errorPrefix) {
@@ -111,8 +111,8 @@ async function getIssPositions() {
   }));
 }
 
-async function getN2yoSatellitePath(satelliteId, apiKey) {
-  const url = `https://api.n2yo.com/rest/v1/satellite/positions/${satelliteId}/0/0/0/1000/&apiKey=${encodeURIComponent(apiKey)}`;
+async function getN2yoSatellitePath(satelliteId) {
+  const url = `https://api.n2yo.com/rest/v1/satellite/positions/${satelliteId}/0/0/0/1000/`;
   const data = await fetchJson(url, `N2YO request failed for ${satelliteId}`);
   return (data.positions || [])
     .filter((_, index) => index % 100 === 0)
@@ -456,7 +456,6 @@ function drawLegend(issImage, adhocImage, adhoc) {
 }
 
 async function buildDisplayData() {
-  const key = keyInput.value.trim();
   const satellites = parseSatelliteIds(satellitesInput.value);
 
   const [issPositions, moonState] = await Promise.all([
@@ -502,7 +501,7 @@ async function buildDisplayData() {
 
   return {
     meta: {
-      keyProvided: Boolean(key),
+      workerConfigured: Boolean((workerInput?.value || DEFAULT_N2YO_WORKER_URL || '').trim()),
       satelliteIds: satellites,
       userLat: DEFAULT_USER_LAT,
       width: WIDTH,
@@ -534,9 +533,7 @@ async function render() {
   errorEl.textContent = '';
 
   const nextParams = new URLSearchParams();
-  if (keyInput.value.trim()) nextParams.set('key', keyInput.value.trim());
   if (satellitesInput.value.trim()) nextParams.set('satellites', satellitesInput.value.trim());
-  if (proxyInput.value.trim()) nextParams.set('proxy', proxyInput.value.trim());
   const newUrl = window.location.pathname + (nextParams.toString() ? `?${nextParams.toString()}` : '');
   history.replaceState(null, '', newUrl);
 
@@ -624,7 +621,7 @@ render().then(() => {
 function formatError(error) {
   const text = error instanceof Error ? error.message : String(error);
   if (text.includes('CORS')) {
-    return `${text}\n\nThis static build depends on the browser being allowed to call the upstream APIs directly.`;
+    return `${text}\n\nThis request likely needs your Cloudflare Worker URL configured so the browser does not call N2YO directly.`;
   }
   return text;
 }
