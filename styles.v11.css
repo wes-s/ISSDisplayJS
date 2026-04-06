@@ -11,27 +11,29 @@ html, body {
 
 .title {
   margin: 0 auto 8px;
-  width: 1000px;
-  max-width: 1000px;
+  width: calc(100vw - 32px);
+  max-width: none;
   min-height: 28px;
   text-align: center;
   white-space: pre-wrap;
   font-size: 18px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 canvas {
   display: block;
   margin: 0 auto;
-  max-width: 100%;
+  width: calc(100vw - 32px);
+  max-width: none;
   height: auto;
   background: #000;
   border: 1px solid #1d1d1d;
 }
 
 .error {
-  width: 1000px;
-  max-width: 1000px;
+  width: calc(100vw - 32px);
+  max-width: none;
   margin: 10px auto 0;
   color: #ff6b6b;
   white-space: pre-wrap;
@@ -39,8 +41,8 @@ canvas {
 }
 
 .controls {
-  width: 1000px;
-  max-width: 1000px;
+  width: calc(100vw - 32px);
+  max-width: none;
   margin: 14px auto 0;
   display: flex;
   flex-wrap: wrap;

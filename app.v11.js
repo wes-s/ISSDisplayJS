@@ -43,6 +43,8 @@ const ctx = canvas.getContext('2d');
 const errorEl = document.getElementById('error');
 const titleEl = document.getElementById('title');
 let refreshTimer = null;
+let animationFrameId = null;
+let sceneState = null;
 
 satellitesInput.value = params.get('satellites') || '';
 
@@ -389,6 +391,11 @@ function drawMarker(point, centerX, color, radius, alpha) {
 async function drawIcon(point, centerX, url, size) {
   if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
   const image = await loadImage(url);
+  drawLoadedIcon(point, centerX, image, size);
+}
+
+function drawLoadedIcon(point, centerX, image, size) {
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
   const canvasPoint = toCanvasPoint(point, centerX);
   ctx.drawImage(image, canvasPoint.x - size / 2, canvasPoint.y - size / 2, size, size);
 }
@@ -446,7 +453,7 @@ function drawLegend(issImage, adhocImage, adhoc) {
     const cy = 32;
     ctx.fillStyle = sat.color;
     ctx.beginPath();
-    ctx.arc(x + 10, cy, 10, 0, Math.PI * 2);
+    ctx.arc(x + 10, cy, 12, 0, Math.PI * 2);
     ctx.fill();
     ctx.drawImage(adhocImage, x, cy - 10, 20, 20);
     ctx.fillStyle = '#fff';
@@ -530,6 +537,66 @@ async function buildDisplayData() {
   };
 }
 
+
+function drawScene(data, images, nowMs = Date.now()) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawHemisphereComposite(images.northNight, images.northDay, NORTH_CENTER_X, DEFAULT_USER_LAT, data.layers.sunPosition);
+  ctx.drawImage(images.corners, 0, TOP_OFFSET, PANEL_SIZE, PANEL_SIZE);
+
+  drawHemisphereComposite(images.southNight, images.southDay, SOUTH_CENTER_X, -DEFAULT_USER_LAT, data.layers.sunPosition);
+  ctx.drawImage(images.corners, PANEL_SIZE, TOP_OFFSET, PANEL_SIZE, PANEL_SIZE);
+
+  drawPath(data.layers.northIss, NORTH_CENTER_X, 'purple', 1, 0.8);
+  drawArrows(data.layers.northIss, NORTH_CENTER_X, 'purple', 10, 0.8);
+  drawMarker(data.layers.northIss[data.meta.issIndex], NORTH_CENTER_X, 'purple', data.meta.footprint, 0.5);
+  drawLoadedIcon(data.layers.northIss[data.meta.issIndex], NORTH_CENTER_X, images.iss, 40);
+
+  drawPath(data.layers.southIss, SOUTH_CENTER_X, 'purple', 1, 0.8);
+  drawArrows(data.layers.southIss, SOUTH_CENTER_X, 'purple', 10, 0.8);
+  drawMarker(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, 'purple', data.meta.footprint, 0.5);
+  drawLoadedIcon(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, images.iss, 40);
+
+  drawPath(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
+  drawArrows(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
+  drawPath(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
+  drawArrows(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
+
+  if (data.layers.northMoonPosition.visible) {
+    const p = toCanvasPoint(data.layers.northMoonPosition, NORTH_CENTER_X);
+    ctx.drawImage(images.moon, p.x - 37, p.y - 37, 74, 74);
+  }
+  if (data.layers.southMoonPosition.visible) {
+    const p = toCanvasPoint(data.layers.southMoonPosition, SOUTH_CENTER_X);
+    ctx.drawImage(images.moon, p.x - 37, p.y - 37, 74, 74);
+  }
+
+  const phase = (nowMs % 1600) / 1600;
+  const pulse = 20 + (Math.sin(phase * Math.PI * 2) * 4);
+
+  for (const sat of data.layers.adhoc) {
+    drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
+    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.35);
+    drawLoadedIcon(sat.north[0], NORTH_CENTER_X, images.hubble, 20);
+
+    drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
+    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.35);
+    drawLoadedIcon(sat.south[0], SOUTH_CENTER_X, images.hubble, 20);
+  }
+
+  drawLegend(images.iss, images.hubble, data.layers.adhoc);
+}
+
+function animateScene() {
+  if (!sceneState) return;
+  drawScene(sceneState.data, sceneState.images, Date.now());
+  animationFrameId = window.requestAnimationFrame(animateScene);
+}
+
 async function render() {
   errorEl.textContent = '';
 
@@ -540,10 +607,6 @@ async function render() {
 
   const data = await buildDisplayData();
   titleEl.textContent = data.meta.title || '';
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const [northNight, northDay, southNight, southDay, corners, moon, iss, hubble] = await Promise.all([
     loadImage(data.images.northNight),
@@ -556,49 +619,16 @@ async function render() {
     loadImage(data.images.hubble)
   ]);
 
-  drawHemisphereComposite(northNight, northDay, NORTH_CENTER_X, DEFAULT_USER_LAT, data.layers.sunPosition);
-  ctx.drawImage(corners, 0, TOP_OFFSET, PANEL_SIZE, PANEL_SIZE);
+  sceneState = {
+    data,
+    images: { northNight, northDay, southNight, southDay, corners, moon, iss, hubble }
+  };
 
-  drawHemisphereComposite(southNight, southDay, SOUTH_CENTER_X, -DEFAULT_USER_LAT, data.layers.sunPosition);
-  ctx.drawImage(corners, PANEL_SIZE, TOP_OFFSET, PANEL_SIZE, PANEL_SIZE);
-
-  drawPath(data.layers.northIss, NORTH_CENTER_X, 'purple', 1, 0.8);
-  drawArrows(data.layers.northIss, NORTH_CENTER_X, 'purple', 10, 0.8);
-  drawMarker(data.layers.northIss[data.meta.issIndex], NORTH_CENTER_X, 'purple', data.meta.footprint, 0.5);
-  await drawIcon(data.layers.northIss[data.meta.issIndex], NORTH_CENTER_X, data.images.iss, 40);
-
-  drawPath(data.layers.southIss, SOUTH_CENTER_X, 'purple', 1, 0.8);
-  drawArrows(data.layers.southIss, SOUTH_CENTER_X, 'purple', 10, 0.8);
-  drawMarker(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, 'purple', data.meta.footprint, 0.5);
-  await drawIcon(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, data.images.iss, 40);
-
-  drawPath(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawArrows(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
-  drawPath(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawArrows(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
-
-  if (data.layers.northMoonPosition.visible) {
-    const p = toCanvasPoint(data.layers.northMoonPosition, NORTH_CENTER_X);
-    ctx.drawImage(moon, p.x - 37, p.y - 37, 74, 74);
+  if (animationFrameId) {
+    window.cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
   }
-  if (data.layers.southMoonPosition.visible) {
-    const p = toCanvasPoint(data.layers.southMoonPosition, SOUTH_CENTER_X);
-    ctx.drawImage(moon, p.x - 37, p.y - 37, 74, 74);
-  }
-
-  for (const sat of data.layers.adhoc) {
-    drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 24, 0.4);
-    await drawIcon(sat.north[0], NORTH_CENTER_X, data.images.hubble, 20);
-
-    drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 24, 0.4);
-    await drawIcon(sat.south[0], SOUTH_CENTER_X, data.images.hubble, 20);
-  }
-
-  drawLegend(iss, hubble, data.layers.adhoc);
+  animateScene();
 }
 
 controls.addEventListener('submit', async (event) => {
