@@ -501,7 +501,7 @@ async function buildDisplayData() {
 
   return {
     meta: {
-      workerConfigured: Boolean((workerInput?.value || DEFAULT_N2YO_WORKER_URL || '').trim()),
+      workerConfigured: Boolean((DEFAULT_N2YO_WORKER_URL || '').trim()),
       satelliteIds: satellites,
       userLat: DEFAULT_USER_LAT,
       width: WIDTH,
