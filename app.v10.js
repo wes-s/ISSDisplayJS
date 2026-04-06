@@ -442,14 +442,14 @@ function drawLegend(issImage, adhocImage, adhoc) {
   ctx.fillText('ISS', 58, 32);
 
   adhoc.forEach((sat, index) => {
-    const x = 130 + (index * 170);
+    const x = 130 + (index * 135);
     ctx.fillStyle = sat.color;
     ctx.beginPath();
-    ctx.arc(x + 20, 20, 12, 0, Math.PI * 2);
+    ctx.arc(x + 10, 20, 6, 0, Math.PI * 2);
     ctx.fill();
-    ctx.drawImage(adhocImage, x, 0, 40, 40);
+    ctx.drawImage(adhocImage, x, 10, 20, 20);
     ctx.fillStyle = '#fff';
-    ctx.fillText(sat.name, x + 50, 25);
+    ctx.fillText(sat.name, x + 28, 20);
   });
 
   ctx.restore();
@@ -587,14 +587,14 @@ async function render() {
 
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 8, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 12, 0.9);
-    await drawIcon(sat.north[0], NORTH_CENTER_X, data.images.hubble, 40);
+    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 6, 0.9);
+    await drawIcon(sat.north[0], NORTH_CENTER_X, data.images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 8, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 12, 0.9);
-    await drawIcon(sat.south[0], SOUTH_CENTER_X, data.images.hubble, 40);
+    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 6, 0.9);
+    await drawIcon(sat.south[0], SOUTH_CENTER_X, data.images.hubble, 20);
   }
 
   drawLegend(iss, hubble, data.layers.adhoc);
