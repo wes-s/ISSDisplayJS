@@ -478,10 +478,10 @@ async function buildDisplayData() {
   southMoonPosition.visible = Number.isFinite(southMoonPosition.x) && Number.isFinite(southMoonPosition.y) && Math.hypot(southMoonPosition.x, southMoonPosition.y) <= MAP_RADIUS;
 
   let adhoc = [];
-  if (key && satellites.length > 0) {
+  if (satellites.length > 0) {
     adhoc = await Promise.all(
       satellites.map(async (satelliteId, index) => {
-        const path = await getN2yoSatellitePath(satelliteId, key);
+        const path = await getN2yoSatellitePath(satelliteId);
         return {
           satelliteId,
           color: pickColor(index, satellites.length),
