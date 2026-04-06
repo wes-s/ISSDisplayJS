@@ -449,7 +449,9 @@ function drawLegend(issImage, adhocImage, adhoc) {
   ctx.fillText('ISS', 58, 32);
 
   adhoc.forEach((sat, index) => {
-    const x = 130 + (index * 135);
+    const total = adhoc.length;
+    const spacing = Math.min(120, (canvas.width - 200) / Math.max(1, total));
+    const x = 100 + (index * spacing);
     const cy = 32;
     ctx.fillStyle = sat.color;
     ctx.beginPath();
@@ -578,12 +580,12 @@ function drawScene(data, images, nowMs = Date.now()) {
 
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
+    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 10, 0.9);
     drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.75);
     drawLoadedIcon(sat.north[0], NORTH_CENTER_X, images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
+    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 10, 0.9);
     drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.75);
     drawLoadedIcon(sat.south[0], SOUTH_CENTER_X, images.hubble, 20);
   }
