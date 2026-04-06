@@ -589,12 +589,12 @@ async function render() {
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 14, 0.45);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 24, 0.4);
     await drawIcon(sat.north[0], NORTH_CENTER_X, data.images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 14, 0.45);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 24, 0.4);
     await drawIcon(sat.south[0], SOUTH_CENTER_X, data.images.hubble, 20);
   }
 
