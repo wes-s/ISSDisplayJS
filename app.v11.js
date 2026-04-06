@@ -573,18 +573,18 @@ function drawScene(data, images, nowMs = Date.now()) {
     ctx.drawImage(images.moon, p.x - 37, p.y - 37, 74, 74);
   }
 
-  const phase = (nowMs % 1600) / 1600;
-  const pulse = 20 + (Math.sin(phase * Math.PI * 2) * 4);
+  const phase = (nowMs % 2400) / 2400;
+  const pulse = 22 + (Math.sin(phase * Math.PI * 2) * 1);
 
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.35);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.75);
     drawLoadedIcon(sat.north[0], NORTH_CENTER_X, images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.35);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.75);
     drawLoadedIcon(sat.south[0], SOUTH_CENTER_X, images.hubble, 20);
   }
 
