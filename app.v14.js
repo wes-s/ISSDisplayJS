@@ -493,8 +493,10 @@ function drawLegend(issImage, adhocImage, adhoc) {
   ctx.textBaseline = 'middle';
   ctx.fillText('ISS', 58, 32);
 
+  const total = adhoc.length;
+  const spacing = Math.min(120, Math.max(92, (canvas.width - 200) / Math.max(1, total)));
   adhoc.forEach((sat, index) => {
-    const x = 130 + (index * 135);
+    const x = 100 + (index * spacing);
     const cy = 32;
     ctx.fillStyle = sat.color;
     ctx.beginPath();
@@ -502,7 +504,7 @@ function drawLegend(issImage, adhocImage, adhoc) {
     ctx.fill();
     ctx.drawImage(adhocImage, x, cy - 10, 20, 20);
     ctx.fillStyle = '#fff';
-    ctx.fillText(sat.name, x + 28, cy);
+    ctx.fillText(sat.name, x + 24, cy);
   });
 
   ctx.restore();
@@ -618,18 +620,18 @@ function drawScene(data, images, nowMs = Date.now()) {
     ctx.drawImage(images.moon, p.x - 37, p.y - 37, 74, 74);
   }
 
-  const phase = (nowMs % 1600) / 1600;
-  const pulse = 20 + (Math.sin(phase * Math.PI * 2) * 4);
+  const phase = (nowMs % 2400) / 2400;
+  const pulse = 22 + (Math.sin(phase * Math.PI * 2) * 1);
 
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.north, NORTH_CENTER_X, sat.color, 8, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.35);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 1.0);
     drawLoadedIcon(sat.north[0], NORTH_CENTER_X, images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 8, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.35);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 1.0);
     drawLoadedIcon(sat.south[0], SOUTH_CENTER_X, images.hubble, 20);
   }
 
