@@ -124,9 +124,7 @@ async function getN2yoSatellitePath(satelliteId, apiKey) {
 }
 
 async function getMoonState() {
-  const unixDays = Math.floor(Date.now() / 86400000);
-  const phaseData = await fetchJson(`https://api.farmsense.net/v1/moonphases/?d=${unixDays}`, 'Moon phase request failed').catch(() => []);
-  const phaseName = normalizePhaseName(phaseData[0]?.Phase || 'Full');
+  const phaseName = getMoonPhaseName(new Date());
 
   const jd = (Date.now() / 86400000) + 2440587.5;
   const d = jd - 2451543.5;
@@ -284,6 +282,24 @@ function getMoonImageUrl(phaseName) {
     'Waning Crescent': IMAGE_URLS.moonWaningCrescent
   };
   return map[phaseName] || IMAGE_URLS.moonFull;
+}
+
+
+function getMoonPhaseName(now = new Date()) {
+  const synodicMonth = 29.530588853;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
+  const daysSince = (now.getTime() - knownNewMoon) / 86400000;
+  const age = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
+
+  if (age < 1.84566) return "New";
+  if (age < 5.53699) return "Waxing Crescent";
+  if (age < 9.22831) return "First Quarter";
+  if (age < 12.91963) return "Waxing Gibbous";
+  if (age < 16.61096) return "Full";
+  if (age < 20.30228) return "Waning Gibbous";
+  if (age < 23.99361) return "Third Quarter";
+  if (age < 27.68493) return "Waning Crescent";
+  return "New";
 }
 
 function normalizePhaseName(value) {
