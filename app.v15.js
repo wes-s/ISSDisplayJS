@@ -388,23 +388,25 @@ function drawMoonSideArrows(points, centerX, targetPoint, color, size, alpha) {
 
   points.forEach((point, index) => {
     if (index % 3 !== 0) return;
-    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.bearingToNext)) return;
 
     const canvasPoint = toCanvasPoint(point, centerX);
 
-    // Start with the path-tangent direction, like the earlier rendering.
-    let angle = Number.isFinite(point.bearingToNext) ? -point.bearingToNext : 0;
+    // Start from the boundary-following tangent.
+    const tangent = -point.bearingToNext;
 
-    // Bias the arrow slightly toward the side of the Earth where the moon is visible,
-    // without pointing directly at the moon itself.
+    // Figure out which side of the boundary the moon-visible region is on.
     const towardMoon = Math.atan2(
       targetCanvas.y - canvasPoint.y,
       targetCanvas.x - canvasPoint.x
     ) + Math.PI / 2;
 
-    const delta = Math.atan2(Math.sin(towardMoon - angle), Math.cos(towardMoon - angle));
-    const sideBias = Math.max(-0.45, Math.min(0.45, delta * 0.35));
-    angle += sideBias;
+    const delta = Math.atan2(Math.sin(towardMoon - tangent), Math.cos(towardMoon - tangent));
+
+    // Instead of pointing directly at the moon, cant the arrow a fixed amount
+    // toward the visible side, closer to the Python rendering.
+    const fixedTurn = 0.62; // about 35 degrees
+    const angle = tangent + (delta >= 0 ? fixedTurn : -fixedTurn);
 
     ctx.save();
     ctx.translate(canvasPoint.x, canvasPoint.y);
@@ -420,6 +422,7 @@ function drawMoonSideArrows(points, centerX, targetPoint, color, size, alpha) {
 
   ctx.restore();
 }
+
 
 function drawMarker(point, centerX, color, radius, alpha) {
   if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
