@@ -376,6 +376,41 @@ function drawArrows(points, centerX, color, size, alpha) {
   ctx.restore();
 }
 
+
+function drawArrowsTowardPoint(points, centerX, targetPoint, color, size, alpha) {
+  if (!targetPoint || !Number.isFinite(targetPoint.x) || !Number.isFinite(targetPoint.y)) return;
+
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = alpha;
+
+  const targetCanvas = toCanvasPoint(targetPoint, centerX);
+
+  points.forEach((point, index) => {
+    if (index % 3 !== 0) return;
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+
+    const canvasPoint = toCanvasPoint(point, centerX);
+    const angle = Math.atan2(
+      targetCanvas.y - canvasPoint.y,
+      targetCanvas.x - canvasPoint.x
+    ) + Math.PI / 2;
+
+    ctx.save();
+    ctx.translate(canvasPoint.x, canvasPoint.y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(0, -size / 2);
+    ctx.lineTo(size / 2.2, size / 2);
+    ctx.lineTo(-size / 2.2, size / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+
+  ctx.restore();
+}
+
 function drawMarker(point, centerX, color, radius, alpha) {
   if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
   const canvasPoint = toCanvasPoint(point, centerX);
@@ -449,9 +484,7 @@ function drawLegend(issImage, adhocImage, adhoc) {
   ctx.fillText('ISS', 58, 32);
 
   adhoc.forEach((sat, index) => {
-    const total = adhoc.length;
-    const spacing = Math.min(120, (canvas.width - 200) / Math.max(1, total));
-    const x = 100 + (index * spacing);
+    const x = 130 + (index * 135);
     const cy = 32;
     ctx.fillStyle = sat.color;
     ctx.beginPath();
@@ -562,9 +595,9 @@ function drawScene(data, images, nowMs = Date.now()) {
   drawLoadedIcon(data.layers.southIss[data.meta.issIndex], SOUTH_CENTER_X, images.iss, 40);
 
   drawPath(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawArrows(data.layers.northMoonPath, NORTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
+  drawArrowsTowardPoint(data.layers.northMoonPath, NORTH_CENTER_X, data.layers.northMoonPosition, 'rgba(220,220,220,0.55)', 6, 0.55);
   drawPath(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.35)', 1, 0.45);
-  drawArrows(data.layers.southMoonPath, SOUTH_CENTER_X, 'rgba(220,220,220,0.55)', 6, 0.55);
+  drawArrowsTowardPoint(data.layers.southMoonPath, SOUTH_CENTER_X, data.layers.southMoonPosition, 'rgba(220,220,220,0.55)', 6, 0.55);
 
   if (data.layers.northMoonPosition.visible) {
     const p = toCanvasPoint(data.layers.northMoonPosition, NORTH_CENTER_X);
@@ -575,18 +608,18 @@ function drawScene(data, images, nowMs = Date.now()) {
     ctx.drawImage(images.moon, p.x - 37, p.y - 37, 74, 74);
   }
 
-  const phase = (nowMs % 2400) / 2400;
-  const pulse = 22 + (Math.sin(phase * Math.PI * 2) * 1);
+  const phase = (nowMs % 1600) / 1600;
+  const pulse = 20 + (Math.sin(phase * Math.PI * 2) * 4);
 
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 10, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.75);
+    drawArrows(sat.north, NORTH_CENTER_X, sat.color, 8, 0.9);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, pulse, 0.35);
     drawLoadedIcon(sat.north[0], NORTH_CENTER_X, images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
-    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 10, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.75);
+    drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 8, 0.9);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, pulse, 0.35);
     drawLoadedIcon(sat.south[0], SOUTH_CENTER_X, images.hubble, 20);
   }
 
