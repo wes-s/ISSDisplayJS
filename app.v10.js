@@ -443,13 +443,14 @@ function drawLegend(issImage, adhocImage, adhoc) {
 
   adhoc.forEach((sat, index) => {
     const x = 130 + (index * 135);
+    const cy = 32;
     ctx.fillStyle = sat.color;
     ctx.beginPath();
-    ctx.arc(x + 10, 20, 6, 0, Math.PI * 2);
+    ctx.arc(x + 10, cy, 10, 0, Math.PI * 2);
     ctx.fill();
-    ctx.drawImage(adhocImage, x, 10, 20, 20);
+    ctx.drawImage(adhocImage, x, cy - 10, 20, 20);
     ctx.fillStyle = '#fff';
-    ctx.fillText(sat.name, x + 28, 20);
+    ctx.fillText(sat.name, x + 28, cy);
   });
 
   ctx.restore();
@@ -588,12 +589,12 @@ async function render() {
   for (const sat of data.layers.adhoc) {
     drawPath(sat.north, NORTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.north, NORTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 6, 0.9);
+    drawMarker(sat.north[0], NORTH_CENTER_X, sat.color, 14, 0.45);
     await drawIcon(sat.north[0], NORTH_CENTER_X, data.images.hubble, 20);
 
     drawPath(sat.south, SOUTH_CENTER_X, sat.color, 1, 0.9);
     drawArrows(sat.south, SOUTH_CENTER_X, sat.color, 5, 0.9);
-    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 6, 0.9);
+    drawMarker(sat.south[0], SOUTH_CENTER_X, sat.color, 14, 0.45);
     await drawIcon(sat.south[0], SOUTH_CENTER_X, data.images.hubble, 20);
   }
 
